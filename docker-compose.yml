@@ -1,18 +1,18 @@
 version: "3.4"
 services:
-  deluge:
-    container_name: deluge
-    image: linuxserver/deluge:latest
-    restart: unless-stopped
-    network_mode: host # run on the vpn network
+  flaresolverr:
+    # DockerHub mirror flaresolverr/flaresolverr:latest
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
     environment:
-      - PUID=${PUID} # default user id, defined in .env
-      - PGID=${PGID} # default group id, defined in .env
-      - TZ=${TZ} # timezone, defined in .env
-    volumes:
-      - ${ROOT}/downloads:/downloads # downloads folder
-      - ${ROOT}/config/deluge:/config # config files
-
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=Asia/Jakarta
+    ports:
+      - "${PORT:-8191}:8191"
+    restart: unless-stopped
+    
   jackett:
     container_name: jackett
     image: linuxserver/jackett:latest
@@ -25,7 +25,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ${ROOT}/downloads/torrent-blackhole:/downloads # place where to put .torrent files for manual download
-      - ${ROOT}/config/jackett:/config # config files
+      - ${CONFIG}/jackett:/config # config files
 
   sonarr:
     container_name: sonarr
@@ -38,7 +38,7 @@ services:
       - TZ=${TZ} # timezone, defined in .env
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ${ROOT}/config/sonarr:/config # config files
+      - ${CONFIG}/sonarr:/config # config files
       - ${ROOT}/complete/tv:/tv # tv shows folder
       - ${ROOT}/downloads:/downloads # download folder
 
@@ -53,7 +53,7 @@ services:
       - TZ=${TZ} # timezone, defined in .env
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ${ROOT}/config/radarr:/config # config files
+      - ${CONFIG}/radarr:/config # config files
       - ${ROOT}/complete/movies:/movies # movies folder
       - ${ROOT}/downloads:/downloads # download folder
 
@@ -65,21 +65,26 @@ services:
       - TZ=${TZ} # timezone, defined in .env
     network_mode: host
     volumes:
-      - ${ROOT}/config/plex/db:/config # plex database
-      - ${ROOT}/config/plex/transcode:/transcode # temp transcoded files
+      - ${CONFIG}/plex/db:/config # plex database
+      - ${CONFIG}/plex/transcode:/transcode # temp transcoded files
       - ${ROOT}/complete:/data # media library
-
-  bazarr:
-    container_name: bazarr
-    image: linuxserver/bazarr
-    restart: unless-stopped
-    network_mode: host
+  
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
     environment:
       - PUID=${PUID} # default user id, defined in .env
       - PGID=${PGID} # default group id, defined in .env
-      - TZ=${TZ} # timezone, defined in .env
-      - UMASK_SET=022 #optional
+      - TZ=${TZ}
+      - TRANSMISSION_WEB_HOME=/combustion-release/ #optional
+      - USER=${TRANS_USER} #optional
+      - PASS=${TRANS_PASSWD} #optional
     volumes:
-      - ${ROOT}/config/bazarr:/config # config files
-      - ${ROOT}/complete/movies:/movies # movies folder
-      - ${ROOT}/complete/tv:/tv # tv shows folder
+      - ${CONFIG}/transmission/config:/config
+      - ${ROOT}:/downloads
+      - ${ROOT}/watch:/watch
+    ports:
+      - 9091:9091
+      - 51413:51413
+      - 51413:51413/udp
+    restart: unless-stopped
