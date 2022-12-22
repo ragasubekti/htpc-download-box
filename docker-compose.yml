@@ -81,8 +81,8 @@ services:
       - PASS=${TRANS_PASSWD} #optional
     volumes:
       - ${CONFIG}/transmission/config:/config
-      - ${ROOT}:/downloads
-      - ${ROOT}/watch:/watch
+      - ${ROOT}/downloads:/downloads
+      - ${ROOT}/downloads/watch:/watch
     ports:
       - 9091:9091
       - 51413:51413
